@@ -1,6 +1,5 @@
 package com.example.service;
 
-import org.springframework.web.bind.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.repository.AccountRepository;
@@ -15,14 +14,17 @@ public class AccountService {
     @Autowired
     private AccountRepository accountRepository;
 
-    public ResponseEntity<Account> createAccount(Account account) {
-        if (!accountRepository.findByUsername(account.getUsername()))
-            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
-        if (account.getUsername().length()>0 && account.getPassword().length()>=4) {
-            Account newAccount = accountRepository.save(account);
-            return new ResponseEntity<>(newAccount, HttpStatus.OK);
+    public ResponseEntity<Account> createAccount(Account newAccount) {
+
+        if (newAccount.getUsername() == null || newAccount.getUsername().trim().isEmpty() || newAccount.getPassword().length()<4) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        Optional<Account> existingAccount = accountRepository.findByUsername(newAccount.getUsername());
+        if (existingAccount.isPresent()) {
+            return new ResponseEntity<>(null, HttpStatus.CONFLICT);
+        }
+        Account savedAccount = accountRepository.save(newAccount);
+        return new ResponseEntity<>(savedAccount, HttpStatus.OK);
     }
 
     public ResponseEntity<Account> login(Account account){

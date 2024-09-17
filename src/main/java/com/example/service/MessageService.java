@@ -26,7 +26,7 @@ public class MessageService {
 
         if(existingMessage.isPresent()){
             Message message = existingMessage.get();
-            message.setMessageText(messageText.getMessageText());
+            message.setMessageText(message.getMessageText());
             messageRepository.save(message);
             return 1;
         }
@@ -36,6 +36,11 @@ public class MessageService {
         }
     
     public ResponseEntity<Message> createMessage(Message newMessage){
+        Optional<Message> existingAccount = messageRepository.findById(newMessage.getPostedBy());
+        if(!existingAccount.isPresent()){
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+
         if (newMessage==null || newMessage.getMessageText().trim().isEmpty() || newMessage.getMessageText().length()>255){
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
@@ -44,7 +49,7 @@ public class MessageService {
     }
 
     public ResponseEntity<Message> findMessageById(int messageId){
-        Optional<Message> existingMessage = messageRepository.findById(messageId);
+        Optional<Message> existingMessage = messageRepository.findMessageById(messageId);
 
         if(existingMessage.isPresent()){
             Message message = existingMessage.get();
@@ -55,21 +60,35 @@ public class MessageService {
         }
     }
 
-    public ResponseEntity<?> deleteMessageById(int messageId) {
-        Optional<Message> existingMessage = messageRepository.findById(messageId);
-    
-        if (existingMessage.isPresent()) {
-            messageRepository.deleteByMessageId(messageId);
-            return new ResponseEntity<>(1, HttpStatus.OK); 
-        } else {
-            return new ResponseEntity<>(HttpStatus.OK);  
+    public Optional<Message> findMessById(int messageId){
+        Optional<Message> existingMessage = messageRepository.findMessageById(messageId);
+
+        if(existingMessage.isPresent()){
+            return existingMessage;
+        }
+        else{
+            return null;
         }
     }
+
 
     public ResponseEntity<List<Message>> findMessagesByAccountId(Integer accountId) {
         List<Message> messages = messageRepository.findByPostedBy(accountId);
         return ResponseEntity.ok(messages);
     }
 
+
+    public int delete(Integer messageId){
+
+        Optional<Message> existingMessage = messageRepository.findById(messageId);
+        
+        if(existingMessage.isPresent()){
+            messageRepository.deleteById(messageId);
+            return 1;
+        }
+        else{
+            return 0;
+        }
+    }
 }
 
